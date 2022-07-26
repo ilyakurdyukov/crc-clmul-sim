@@ -172,6 +172,8 @@ e76a8c2e crc32_clmul: 96.525ms
 e76a8c2e crc32_clmul: 96.541ms
 552c62dd crc32_intel: 33.676ms
 552c62dd crc32_intel: 33.649ms
+552c62dd crc32_intel_long: 11.794ms
+552c62dd crc32_intel_long: 11.618ms
 85b023217b513aeb crc64_slice4: 209.050ms
 85b023217b513aeb crc64_slice4: 208.272ms
 85b023217b513aeb crc64_clsim: 162.125ms
