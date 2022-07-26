@@ -2,6 +2,8 @@
 
 An experiment to replace the CRC algorithm using LUT with a code that simulates CLMUL (carry-less multiplication).
 
+This is similar to the MCM (Multiple Constant Multiplication) problem, but for carry-less multiplication.
+
 On modern CPUs this method is faster than code using LUT. But slower than using a real CLMUL instruction.
 
 * Optimized for 64-bit architectures, slower on 32-bit architectures. The only 64-bit CPUs known to me without the CLMUL instruction are Elbrus before v6 (if not counting the ancient ones like Pentium 4).
