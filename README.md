@@ -24,6 +24,9 @@ for m in crc32_slice4 crc32_slice4 \
 done
 ```
 
+* `x86`: use `-march=native` or `-msse4.2 -mpclmul`
+* `arm`: use `-mcpu=native` or `-march=armv8-a+crypto+crc`
+
 ### List of available CRC variants:
 
 `crc32/64_micro`: simplest implementation  
