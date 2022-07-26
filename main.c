@@ -2,14 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <time.h>
-#include <sys/time.h>
-static int64_t get_time_usec() {
-	struct timeval time;
-	gettimeofday(&time, NULL);
-	return time.tv_sec * (int64_t)1000000 + time.tv_usec;
-}
 
 #include "crc_slice.h"
 #include "crc_clsim.h"
@@ -294,7 +287,8 @@ int main(int argc, char **argv) {
 	FILE *f = NULL;
 	int verbose = 1;
 	const char *type = "crc64_simple";
-	int64_t time, timesum = 0;
+	long long timesum = 0;
+	struct timespec ts0, ts1;
 
 	while (argc > 2) {
 		if (argc > 2 && !strcmp(argv[1], "-i")) {
@@ -382,9 +376,11 @@ int main(int argc, char **argv) {
 			if (f) n = fread(buf, 1, nbuf, f);
 			else len -= n = len > nbuf ? nbuf : len;
 			if (!n) break;
-			time = get_time_usec();
+			clock_gettime(CLOCK_MONOTONIC, &ts0);
 			crc = crc64_fn(buf, n, crc);
-			timesum += get_time_usec() - time;
+			clock_gettime(CLOCK_MONOTONIC, &ts1);
+			timesum += (ts1.tv_sec - ts0.tv_sec) * 1000000000LL;
+			timesum += ts1.tv_nsec - ts0.tv_nsec;
 		} while (n == nbuf);
 		printf("%016llx", (long long)crc);
 	} else {
@@ -394,15 +390,17 @@ int main(int argc, char **argv) {
 			if (f) n = fread(buf, 1, nbuf, f);
 			else len -= n = len > nbuf ? nbuf : len;
 			if (!n) break;
-			time = get_time_usec();
+			clock_gettime(CLOCK_MONOTONIC, &ts0);
 			crc = crc32_fn(buf, n, crc);
-			timesum += get_time_usec() - time;
+			clock_gettime(CLOCK_MONOTONIC, &ts1);
+			timesum += (ts1.tv_sec - ts0.tv_sec) * 1000000000LL;
+			timesum += ts1.tv_nsec - ts0.tv_nsec;
 		} while (n == nbuf);
 		printf("%08x", crc);
 	}
 
 	if (verbose > 0)
-		printf(" %s: %.3fms\n", type, timesum * 0.001);
+		printf(" %s: %.3fms\n", type, timesum * 1e-6);
 	else
 		printf("\n");
 
