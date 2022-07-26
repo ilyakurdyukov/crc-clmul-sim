@@ -2,8 +2,6 @@
 
 An experiment to replace the CRC algorithm using LUT with a code that simulates CLMUL (carry-less multiplication).
 
-This is similar to the MCM (Multiple Constant Multiplication) problem, but for carry-less multiplication.
-
 On modern CPUs this method is faster than code using LUT. But slower than using a real CLMUL instruction.
 
 * Optimized for 64-bit architectures, slower on 32-bit architectures. The only 64-bit CPUs known to me without the CLMUL instruction are Elbrus before v6 (if not counting the ancient ones like Pentium 4).
@@ -26,14 +24,16 @@ done
 
 ### List of available CRC variants:
 
-crc32/64_micro: simplest implementation  
-crc32/64_simple: LUT  
-crc32/64_slice4: LUT, slice by 4  
-crc32/64_clsim: CLMUL simulation  
-crc32/64_clmul: using CLMUL instructions (x86, e2k-v6)  
-crc32/64_clmul2: CLMUL simulation code, but using CLMUL instruction (e2k-v6, ARMv8, x86)  
-crc32_arm: using CRC32 instructions (ARMv8)  
-crc32_intel: using CRC32 instructions, different polynomial (SSE4.2)  
+`crc32/64_micro`: simplest implementation  
+`crc32/64_simple`: LUT  
+`crc32/64_slice4`: LUT, slice by 4  
+`crc32/64_clsim`: CLMUL simulation  
+`crc32/64_clmul`: using CLMUL instructions (x86, e2k-v6)  
+`crc32/64_clmul2`: CLMUL simulation code, but using CLMUL instruction (e2k-v6, ARMv8, x86)  
+`crc32_arm`: using CRC32 instructions (ARMv8)  
+`crc32_arm_long`: same but with 4 instructions in parallel for 16KB blocks.  
+`crc32_intel`: using CRC32 instructions, different polynomial (SSE4.2)  
+`crc32_intel_long`: same but with 4 instructions in parallel for 16KB blocks.  
 
 ### Results
 
@@ -47,6 +47,8 @@ e76a8c2e crc32_clmul: 10.771ms
 e76a8c2e crc32_clmul: 10.781ms
 552c62dd crc32_intel: 14.398ms
 552c62dd crc32_intel: 14.360ms
+552c62dd crc32_intel_long: 4.196ms
+552c62dd crc32_intel_long: 4.193ms
 85b023217b513aeb crc64_slice4: 72.965ms
 85b023217b513aeb crc64_slice4: 72.995ms
 85b023217b513aeb crc64_clsim: 49.685ms
@@ -65,6 +67,8 @@ e76a8c2e crc32_clmul: 10.754ms
 e76a8c2e crc32_clmul: 10.753ms
 552c62dd crc32_intel: 21.528ms
 552c62dd crc32_intel: 21.553ms
+552c62dd crc32_intel_long: 7.787ms
+552c62dd crc32_intel_long: 7.774ms
 85b023217b513aeb crc64_slice4: 93.266ms
 85b023217b513aeb crc64_slice4: 93.271ms
 85b023217b513aeb crc64_clsim: 103.538ms
@@ -83,6 +87,8 @@ e76a8c2e crc32_clmul: 9.650ms
 e76a8c2e crc32_clmul: 9.637ms
 552c62dd crc32_intel: 14.330ms
 552c62dd crc32_intel: 14.564ms
+552c62dd crc32_intel_long: 3.935ms
+552c62dd crc32_intel_long: 3.941ms
 85b023217b513aeb crc64_slice4: 79.391ms
 85b023217b513aeb crc64_slice4: 79.411ms
 85b023217b513aeb crc64_clsim: 50.678ms
@@ -141,6 +147,8 @@ e76a8c2e crc32_clmul: 62.793ms
 e76a8c2e crc32_clmul: 67.103ms
 e76a8c2e crc32_arm: 64.259ms
 e76a8c2e crc32_arm: 62.714ms
+e76a8c2e crc32_arm_long: 97.723ms
+e76a8c2e crc32_arm_long: 98.681ms
 85b023217b513aeb crc64_slice4: 192.621ms
 85b023217b513aeb crc64_slice4: 192.354ms
 85b023217b513aeb crc64_clsim: 166.035ms

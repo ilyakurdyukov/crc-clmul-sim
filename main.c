@@ -88,6 +88,33 @@ uint64_t crc64_simple(const uint8_t *s, size_t n, uint64_t crc) {
 	return crc;
 }
 
+static inline uint32_t crc32_multmodp(uint32_t p, uint32_t a, uint32_t b) {
+	uint32_t x = 0;
+	do {
+		x ^= b & (int32_t)a >> 31;
+		b = b >> 1 ^ ((0 - (b & 1)) & p);
+	} while ((a <<= 1));
+	return x;
+}
+
+// M##i = calc_hi(POLY, POLY, i * N * 8 - 32)
+
+#define CRC32_PARALLEL4(fn, T, N, POLY, M1, M2, M3) \
+	for (; n >= N*4; n -= N*4) { \
+		const uint8_t *s1 = s + N, *s2 = s + N*2, *s3 = s + N*3, *e = s1; \
+		uint32_t c1 = ~0, c2 = ~0, c3 = ~0; \
+		while (s < e) { \
+			c = fn(c, *(T*)s); s += sizeof(T); \
+			c1 = fn(c1, *(T*)s1); s1 += sizeof(T); \
+			c2 = fn(c2, *(T*)s2); s2 += sizeof(T); \
+			c3 = fn(c3, *(T*)s3); s3 += sizeof(T); \
+		} \
+		c = crc32_multmodp(POLY, M3, ~c); \
+		c1 = crc32_multmodp(POLY, M2, ~c1); \
+		c2 = crc32_multmodp(POLY, M1, ~c2); \
+		c ^= c1 ^ c2 ^ c3; s = s3; \
+	}
+
 #ifdef __ARM_FEATURE_CRC32
 #include <arm_acle.h>
 uint32_t crc32_arm(const uint8_t *s, size_t n, uint32_t c) {
@@ -122,6 +149,22 @@ uint32_t crc32_arm(const uint8_t *s, size_t n, uint32_t c) {
 	else
 		for (; n; n--) c = __crc32b(c, *s++);
 	return ~c;
+}
+
+uint32_t crc32_arm_long(const uint8_t *s, size_t n, uint32_t c) {
+	c = ~c;
+#ifndef __i386__
+#ifdef CRC32_PARALLEL4
+	CRC32_PARALLEL4(__crc32d, uint64_t, 4096,
+			0xedb88320, 0x09fe548f, 0x83852d0f, 0xe4b54665)
+#endif
+#else
+#ifdef CRC32_PARALLEL4
+	CRC32_PARALLEL4(__crc32w, uint32_t, 4096,
+			0xedb88320, 0x09fe548f, 0x83852d0f, 0xe4b54665)
+#endif
+#endif
+	return crc32_arm(s, n, ~c);
 }
 #endif
 
@@ -167,6 +210,22 @@ uint32_t crc32_intel(const uint8_t *s, size_t n, uint32_t c) {
 	else
 		for (; n; n--) c = _mm_crc32_u8(c, *s++);
 	return ~c;
+}
+
+uint32_t crc32_intel_long(const uint8_t *s, size_t n, uint32_t c) {
+	c = ~c;
+#ifndef __i386__
+#ifdef CRC32_PARALLEL4
+	CRC32_PARALLEL4(_mm_crc32_u64, uint64_t, 4096,
+			0x82f63b78, 0x35d73a62, 0x28461564, 0x43eefc9f)
+#endif
+#else
+#ifdef CRC32_PARALLEL4
+	CRC32_PARALLEL4(_mm_crc32_u32, uint32_t, 4096,
+			0x82f63b78, 0x35d73a62, 0x28461564, 0x43eefc9f)
+#endif
+#endif
+	return crc32_intel(s, n, ~c);
 }
 
 static int crc32_check2(uint32_t (*crc32_fn)(const uint8_t*, size_t, uint32_t)) {
@@ -300,10 +359,15 @@ int main(int argc, char **argv) {
 #ifdef __ARM_FEATURE_CRC32
 	} else if (!strcmp(type, "crc32_arm")) {
 		crc32_fn = crc32_arm;
+	} else if (!strcmp(type, "crc32_arm_long")) {
+		crc32_fn = crc32_arm_long;
 #endif
 #ifdef __SSE4_2__
 	} else if (!strcmp(type, "crc32_intel")) {
 		crc32_fn = crc32_intel;
+		crc32_check_fn = crc32_check2;
+	} else if (!strcmp(type, "crc32_intel_long")) {
+		crc32_fn = crc32_intel_long;
 		crc32_check_fn = crc32_check2;
 #endif
 
