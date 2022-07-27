@@ -3,14 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <time.h>
-#include <sys/time.h>
-static int64_t get_time_usec() {
-	struct timeval time;
-	gettimeofday(&time, NULL);
-	return time.tv_sec * (int64_t)1000000 + time.tv_usec;
-}
-
 #ifndef WITH_CYCLES
 #define WITH_CYCLES 1
 #endif
@@ -23,6 +15,48 @@ static inline uint64_t get_cycles() { return __rdtsc(); }
 #undef WITH_CYCLES
 #define WITH_CYCLES 0
 #endif
+#endif
+
+#if WITH_CYCLES
+#include <time.h>
+#define TIMER_DEF \
+	uint64_t time = 0; \
+	size_t len1; \
+	struct timespec ts0, ts1; \
+	uint64_t cycles = 0;
+
+#define TIMER_INIT len1 = len;
+
+#define TIMER_START \
+	clock_gettime(CLOCK_MONOTONIC, &ts0); \
+	cycles -= get_cycles();
+
+#define TIMER_STOP \
+	cycles += get_cycles(); \
+	clock_gettime(CLOCK_MONOTONIC, &ts1); \
+	time += (ts1.tv_sec - ts0.tv_sec) * 1000000000 + (ts1.tv_nsec - ts0.tv_nsec);
+
+#define TIMER_PRINT \
+	printf(" %s: %.3fms", type, time * 1e-6); \
+	printf(", %.3f cycles/byte (%.3f GHz)", \
+			1.0 * (int64_t)cycles / len1, \
+			1.0 * (int64_t)cycles / (int64_t)time);
+#else
+#include <time.h>
+#define TIMER_DEF \
+	uint64_t time = 0; \
+	struct timespec ts0, ts1;
+
+#define TIMER_INIT
+
+#define TIMER_START clock_gettime(CLOCK_MONOTONIC, &ts0);
+
+#define TIMER_STOP \
+	clock_gettime(CLOCK_MONOTONIC, &ts1); \
+	time += (ts1.tv_sec - ts0.tv_sec) * 1000000000 + (ts1.tv_nsec - ts0.tv_nsec);
+
+#define TIMER_PRINT \
+	printf(" %s: %.3fms", type, time * 1e-6);
 #endif
 
 #include "crc_slice.h"
@@ -304,25 +338,13 @@ int main(int argc, char **argv) {
 	uint64_t (*crc64_fn)(const uint8_t*, size_t, uint64_t) = NULL;
 	int (*crc32_check_fn)(uint32_t (*crc32_fn)(const uint8_t*, size_t, uint32_t)) = crc32_check;
 	uint8_t *buf;
-	size_t n, len = 100 * 1000000, len1, nbuf = 1 << 20;
+	size_t n, len = 100 * 1000000, nbuf = 1 << 20;
 	FILE *f = NULL;
 	int verbose = 1;
 	const char *type = "crc64_simple";
-	uint64_t time = 0;
-#if WITH_CYCLES
-	uint64_t cycles = 0;
-#define START_TIMER \
-	time -= get_time_usec(); \
-	cycles -= get_cycles();
-#define UPDATE_TIMER \
-	cycles += get_cycles(); \
-	time += get_time_usec();
-#else
-#define START_TIMER time -= get_time_usec();
-#define UPDATE_TIMER time += get_time_usec();
-#endif
+	TIMER_DEF
 
-	while (argc > 2) {
+	while (argc > 1) {
 		if (argc > 2 && !strcmp(argv[1], "-i")) {
 			if (f) return 1;
 			if (!strcmp(argv[2], "-")) f = stdin;
@@ -395,13 +417,13 @@ int main(int argc, char **argv) {
 
 	} else return 1;
 
+	TIMER_INIT
+
 	buf = malloc(nbuf);
 	if (!buf) return 2;
 
 	if (!f)
 		for (n = 0; n < nbuf; n++) buf[n] = n * 0x55;
-
-	len1 = len;
 
 	if (crc64_fn) {
 		uint64_t crc = 0;
@@ -410,9 +432,9 @@ int main(int argc, char **argv) {
 			if (f) n = fread(buf, 1, nbuf, f);
 			else len -= n = len > nbuf ? nbuf : len;
 			if (!n) break;
-			START_TIMER
+			TIMER_START
 			crc = crc64_fn(buf, n, crc);
-			UPDATE_TIMER
+			TIMER_STOP
 		} while (n == nbuf);
 		printf("%016llx", (long long)crc);
 	} else {
@@ -422,18 +444,15 @@ int main(int argc, char **argv) {
 			if (f) n = fread(buf, 1, nbuf, f);
 			else len -= n = len > nbuf ? nbuf : len;
 			if (!n) break;
-			START_TIMER
+			TIMER_START
 			crc = crc32_fn(buf, n, crc);
-			UPDATE_TIMER
+			TIMER_STOP
 		} while (n == nbuf);
 		printf("%08x", crc);
 	}
 
 	if (verbose > 0) {
-		printf(" %s: %.3fms", type, (int64_t)time * 0.001);
-#if WITH_CYCLES
-		printf(", %.3f cycles/byte (%.3f GHz)", 1.0 * (int64_t)cycles / len1, 0.001 * (int64_t)cycles / (int64_t)time);
-#endif
+		TIMER_PRINT
 	}
 	printf("\n");
 
