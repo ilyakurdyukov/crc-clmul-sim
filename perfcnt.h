@@ -97,6 +97,6 @@ static int perf_read(struct perf_counters *cnt) {
 
 #define TIMER_PRINT \
 	printf(" %s: %.3fms", type, time * 1e-6); \
-	printf(", %g cycles/byte, %g insn/cycle (%.3f GHz)", \
+	printf(", %.3f cycles/byte, %.3f insn/byte (%.3f GHz)", \
 			min_cycles, min_insns, 1.0 * (int64_t)cycles / (int64_t)time);
 
