@@ -171,31 +171,28 @@ uint64_t crc64_clmul(const uint8_t *data, size_t length, uint64_t crc) {
 #if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
 #define CRC_SIMD_LOOP \
 	if (adata < end) { \
-		adata++; \
 		__asm__ __volatile__( \
 		".p2align 4,,10\n\t" \
 		".p2align 3\n\t" \
 		"1:\n\t" \
 		"movdqa\t(%[p]), %3\n\t" \
 		"movdqa\t%0, %2\n\t" \
-		"cmp\t%[e], %[p]\n\t" \
 		"pclmulqdq\t$0x00, %[f], %0\n\t" \
 		"pclmulqdq\t$0x11, %[f], %2\n\t" \
+		"lea\t16(%[p]), %[p]\n\t" \
 		"pxor\t%1, %0\n\t" \
 		"pxor\t%2, %0\n\t" \
-		"lea\t16(%[p]), %[p]\n\t" \
 		"movdqa\t%3, %1\n\t" \
+		"cmp\t%[e], %[p]\n\t" \
 		"jb\t1b\n\t" \
 			: "+&x"(v0), "+&x"(v1), "=&x"(v2), "=&x"(v3), \
 			[p] "+&r"(adata) : [f] "x"(vfold16), [e] "r"(end)); \
-		adata--; \
 	}
 #else
 #define CRC_SIMD_LOOP \
 	while (adata < end) { \
-		adata++; \
 		FOLD \
-		v1 = _mm_load_si128(adata); \
+		v1 = _mm_load_si128(adata++); \
 	}
 #endif
 
@@ -233,7 +230,7 @@ uint64_t crc64_clmul(const uint8_t *data, size_t length, uint64_t crc) {
 			v0 = _mm_xor_si128(v0, v3); \
 			v1 = _mm_alignr_epi8(v1, v0, 8); \
 		} else { \
-			const __m128i *end = (const __m128i*)((char*)adata - 32 + length2); \
+			const __m128i *end = (const __m128i*)((char*)adata++ - 16 + length2); \
 			MASK_LH(vcrc, maskS, v0, v1) \
 			v0 = _mm_xor_si128(v0, data0); \
 			v1 = _mm_xor_si128(v1, data1); \

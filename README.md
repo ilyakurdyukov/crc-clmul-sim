@@ -48,8 +48,8 @@ e76a8c2e crc32_slice4: 79.364ms
 e76a8c2e crc32_slice4: 79.339ms
 e76a8c2e crc32_clsim: 53.848ms
 e76a8c2e crc32_clsim: 53.997ms
-e76a8c2e crc32_clmul: 9.423ms
-e76a8c2e crc32_clmul: 9.446ms
+e76a8c2e crc32_clmul: 9.265ms
+e76a8c2e crc32_clmul: 9.250ms
 552c62dd crc32_intel: 14.398ms
 552c62dd crc32_intel: 14.360ms
 552c62dd crc32_intel_long: 4.196ms
@@ -58,8 +58,8 @@ e76a8c2e crc32_clmul: 9.446ms
 85b023217b513aeb crc64_slice4: 72.995ms
 85b023217b513aeb crc64_clsim: 49.685ms
 85b023217b513aeb crc64_clsim: 49.671ms
-85b023217b513aeb crc64_clmul: 9.481ms
-85b023217b513aeb crc64_clmul: 9.475ms
+85b023217b513aeb crc64_clmul: 9.274ms
+85b023217b513aeb crc64_clmul: 9.292ms
 ```
 
 #### (x86) Alder Lake (P) 3.5GHz / GCC 11.2.0
@@ -68,8 +68,8 @@ e76a8c2e crc32_slice4: 75.898ms
 e76a8c2e crc32_slice4: 76.016ms
 e76a8c2e crc32_clsim: 67.376ms
 e76a8c2e crc32_clsim: 67.357ms
-e76a8c2e crc32_clmul: 9.562ms
-e76a8c2e crc32_clmul: 9.442ms
+e76a8c2e crc32_clmul: 9.375ms
+e76a8c2e crc32_clmul: 9.322ms
 552c62dd crc32_intel: 21.528ms
 552c62dd crc32_intel: 21.553ms
 552c62dd crc32_intel_long: 7.787ms
@@ -78,8 +78,8 @@ e76a8c2e crc32_clmul: 9.442ms
 85b023217b513aeb crc64_slice4: 93.271ms
 85b023217b513aeb crc64_clsim: 103.538ms
 85b023217b513aeb crc64_clsim: 103.527ms
-85b023217b513aeb crc64_clmul: 9.435ms
-85b023217b513aeb crc64_clmul: 9.455ms
+85b023217b513aeb crc64_clmul: 9.297ms
+85b023217b513aeb crc64_clmul: 9.472ms
 ```
 
 #### (x86_64) Alder Lake (P) 3.5GHz / Clang 13.0.0
@@ -88,8 +88,8 @@ e76a8c2e crc32_slice4: 86.163ms
 e76a8c2e crc32_slice4: 86.062ms
 e76a8c2e crc32_clsim: 54.239ms
 e76a8c2e crc32_clsim: 54.494ms
-e76a8c2e crc32_clmul: 9.479ms
-e76a8c2e crc32_clmul: 9.476ms
+e76a8c2e crc32_clmul: 9.263ms
+e76a8c2e crc32_clmul: 9.244ms
 552c62dd crc32_intel: 14.330ms
 552c62dd crc32_intel: 14.564ms
 552c62dd crc32_intel_long: 3.935ms
@@ -98,8 +98,8 @@ e76a8c2e crc32_clmul: 9.476ms
 85b023217b513aeb crc64_slice4: 79.411ms
 85b023217b513aeb crc64_clsim: 50.678ms
 85b023217b513aeb crc64_clsim: 50.565ms
-85b023217b513aeb crc64_clmul: 9.475ms
-85b023217b513aeb crc64_clmul: 9.468ms
+85b023217b513aeb crc64_clmul: 9.281ms
+85b023217b513aeb crc64_clmul: 9.290ms
 ```
 
 #### (x86_64) Zen 2, Ryzen 4500U 2.375GHz
@@ -191,8 +191,8 @@ e76a8c2e crc32_slice4: 188.557ms
 e76a8c2e crc32_slice4: 189.265ms
 e76a8c2e crc32_clsim: 147.344ms
 e76a8c2e crc32_clsim: 147.005ms
-e76a8c2e crc32_clmul: 86.953ms
-e76a8c2e crc32_clmul: 87.021ms
+e76a8c2e crc32_clmul: 83.517ms
+e76a8c2e crc32_clmul: 84.358ms
 552c62dd crc32_intel: 33.676ms
 552c62dd crc32_intel: 33.649ms
 552c62dd crc32_intel_long: 11.794ms
@@ -201,7 +201,7 @@ e76a8c2e crc32_clmul: 87.021ms
 85b023217b513aeb crc64_slice4: 208.272ms
 85b023217b513aeb crc64_clsim: 162.125ms
 85b023217b513aeb crc64_clsim: 162.014ms
-85b023217b513aeb crc64_clmul: 92.579ms
-85b023217b513aeb crc64_clmul: 92.395ms
+85b023217b513aeb crc64_clmul: 84.484ms
+85b023217b513aeb crc64_clmul: 84.035ms
 ```
 
