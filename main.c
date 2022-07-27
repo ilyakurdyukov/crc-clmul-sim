@@ -7,8 +7,46 @@
 #define USE_PERFCNT 0
 #endif
 
+#ifndef WITH_CYCLES
+#define WITH_CYCLES 1
+#endif
+
+#if WITH_CYCLES && !USE_PERFCNT
+#if defined(__i386__) || defined(__x86_64__) || defined(__e2k__)
+#include <x86intrin.h>
+static inline uint64_t get_cycles() { return __rdtsc(); }
+#else
+#undef WITH_CYCLES
+#define WITH_CYCLES 0
+#endif
+#endif
+
 #if USE_PERFCNT
 #include "perfcnt.h"
+#elif WITH_CYCLES
+#include <time.h>
+#define TIMER_DEF \
+	uint64_t time = 0; \
+	size_t len1; \
+	struct timespec ts0, ts1; \
+	uint64_t cycles = 0;
+
+#define TIMER_INIT len1 = len;
+
+#define TIMER_START \
+	clock_gettime(CLOCK_MONOTONIC, &ts0); \
+	cycles -= get_cycles();
+
+#define TIMER_STOP \
+	cycles += get_cycles(); \
+	clock_gettime(CLOCK_MONOTONIC, &ts1); \
+	time += (ts1.tv_sec - ts0.tv_sec) * 1000000000 + (ts1.tv_nsec - ts0.tv_nsec);
+
+#define TIMER_PRINT \
+	printf(" %s: %.3fms", type, time * 1e-6); \
+	printf(", %.3f cycles/byte (%.3f GHz)", \
+			1.0 * (int64_t)cycles / len1, \
+			1.0 * (int64_t)cycles / (int64_t)time);
 #else
 #include <time.h>
 #define TIMER_DEF \
