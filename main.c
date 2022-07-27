@@ -432,7 +432,7 @@ int main(int argc, char **argv) {
 	if (verbose > 0) {
 		printf(" %s: %.3fms", type, (int64_t)time * 0.001);
 #if WITH_CYCLES
-		printf(", %.3f cycles/byte", 1.0 * (int64_t)cycles / len1);
+		printf(", %.3f cycles/byte (%.3f GHz)", 1.0 * (int64_t)cycles / len1, 0.001 * (int64_t)cycles / (int64_t)time);
 #endif
 	}
 	printf("\n");
