@@ -102,6 +102,29 @@ e76a8c2e crc32_clmul: 9.637ms
 85b023217b513aeb crc64_clmul: 9.411ms
 ```
 
+#### (x86_64) Zen 2, Ryzen 4500U 2.375GHz
+
+* Thanks to [@amonakov](https://github.com/amonakov)
+
+```
+e76a8c2e crc32_slice4: 121.648ms
+e76a8c2e crc32_slice4: 121.835ms
+e76a8c2e crc32_clsim: 71.895ms
+e76a8c2e crc32_clsim: 71.976ms
+e76a8c2e crc32_clmul: 18.543ms
+e76a8c2e crc32_clmul: 18.533ms
+552c62dd crc32_intel: 15.892ms
+552c62dd crc32_intel: 15.903ms
+552c62dd crc32_intel_long: 6.434ms
+552c62dd crc32_intel_long: 6.486ms
+85b023217b513aeb crc64_slice4: 110.903ms
+85b023217b513aeb crc64_slice4: 110.943ms
+85b023217b513aeb crc64_clsim: 72.320ms
+85b023217b513aeb crc64_clsim: 72.250ms
+85b023217b513aeb crc64_clmul: 18.538ms
+85b023217b513aeb crc64_clmul: 18.529ms
+```
+
 #### (e2k-v6) Elbrus-16C 2.0GHz / LCC 1.25.20
 ```
 e76a8c2e crc32_slice4: 183.338ms
