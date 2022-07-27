@@ -175,17 +175,17 @@ uint64_t crc64_clmul(const uint8_t *data, size_t length, uint64_t crc) {
 		__asm__ __volatile__( \
 		".p2align 4,,10\n\t" \
 		".p2align 3\n\t" \
-  	"1:\n\t" \
-  	"movdqa\t(%[p]), %3\n\t" \
-  	"movdqa\t%0, %2\n\t" \
-  	"cmp\t%[e], %[p]\n\t" \
-  	"pclmulqdq\t$0x00, %[f], %0\n\t" \
-  	"pclmulqdq\t$0x11, %[f], %2\n\t" \
-  	"pxor\t%1, %0\n\t" \
-  	"pxor\t%2, %0\n\t" \
-  	"lea\t16(%[p]), %[p]\n\t" \
-  	"movdqa\t%3, %1\n\t" \
-  	"jb\t1b\n\t" \
+		"1:\n\t" \
+		"movdqa\t(%[p]), %3\n\t" \
+		"movdqa\t%0, %2\n\t" \
+		"cmp\t%[e], %[p]\n\t" \
+		"pclmulqdq\t$0x00, %[f], %0\n\t" \
+		"pclmulqdq\t$0x11, %[f], %2\n\t" \
+		"pxor\t%1, %0\n\t" \
+		"pxor\t%2, %0\n\t" \
+		"lea\t16(%[p]), %[p]\n\t" \
+		"movdqa\t%3, %1\n\t" \
+		"jb\t1b\n\t" \
 			: "+&x"(v0), "+&x"(v1), "=&x"(v2), "=&x"(v3), \
 			[p] "+&r"(adata) : [f] "x"(vfold16), [e] "r"(end)); \
 		adata--; \

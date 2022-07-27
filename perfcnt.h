@@ -17,8 +17,8 @@ static ssize_t sys_read(int fd, void *buf, size_t size) {
 	ssize_t r;
 #ifdef __x86_64__
 	__asm__ __volatile__("syscall" : "=a"(r)
-				: "a"(SYS_read), "D"(fd), "S"(buf), "d"(size)
-				: "%rcx", "%r11", "memory");
+			: "a"(SYS_read), "D"(fd), "S"(buf), "d"(size)
+			: "%rcx", "%r11", "memory");
 #else
 	r = syscall(SYS_read, fd, buf, size);
 	// r = read(fd, buf, size);
