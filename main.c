@@ -3,11 +3,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef USE_PERFCNT
+#define USE_PERFCNT 0
+#endif
+
 #ifndef WITH_CYCLES
 #define WITH_CYCLES 1
 #endif
 
-#if WITH_CYCLES
+#if WITH_CYCLES && !USE_PERFCNT
 #if defined(__i386__) || defined(__x86_64__) || defined(__e2k__)
 #include <x86intrin.h>
 static inline uint64_t get_cycles() { return __rdtsc(); }
@@ -17,7 +21,9 @@ static inline uint64_t get_cycles() { return __rdtsc(); }
 #endif
 #endif
 
-#if WITH_CYCLES
+#if USE_PERFCNT
+#include "perfcnt.h"
+#elif WITH_CYCLES
 #include <time.h>
 #define TIMER_DEF \
 	uint64_t time = 0; \
