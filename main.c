@@ -11,6 +11,20 @@ static int64_t get_time_usec() {
 	return time.tv_sec * (int64_t)1000000 + time.tv_usec;
 }
 
+#ifndef WITH_CYCLES
+#define WITH_CYCLES 1
+#endif
+
+#if WITH_CYCLES
+#if defined(__i386__) || defined(__x86_64__) || defined(__e2k__)
+#include <x86intrin.h>
+static inline uint64_t get_cycles() { return __rdtsc(); }
+#else
+#undef WITH_CYCLES
+#define WITH_CYCLES 0
+#endif
+#endif
+
 #include "crc_slice.h"
 #include "crc_clsim.h"
 
@@ -290,11 +304,23 @@ int main(int argc, char **argv) {
 	uint64_t (*crc64_fn)(const uint8_t*, size_t, uint64_t) = NULL;
 	int (*crc32_check_fn)(uint32_t (*crc32_fn)(const uint8_t*, size_t, uint32_t)) = crc32_check;
 	uint8_t *buf;
-	size_t n, len = 100 * 1000000, nbuf = 1 << 20;
+	size_t n, len = 100 * 1000000, len1, nbuf = 1 << 20;
 	FILE *f = NULL;
 	int verbose = 1;
 	const char *type = "crc64_simple";
-	int64_t time, timesum = 0;
+	uint64_t time = 0;
+#if WITH_CYCLES
+	uint64_t cycles = 0;
+#define START_TIMER \
+	time -= get_time_usec(); \
+	cycles -= get_cycles();
+#define UPDATE_TIMER \
+	cycles += get_cycles(); \
+	time += get_time_usec();
+#else
+#define START_TIMER time -= get_time_usec();
+#define UPDATE_TIMER time += get_time_usec();
+#endif
 
 	while (argc > 2) {
 		if (argc > 2 && !strcmp(argv[1], "-i")) {
@@ -375,6 +401,8 @@ int main(int argc, char **argv) {
 	if (!f)
 		for (n = 0; n < nbuf; n++) buf[n] = n * 0x55;
 
+	len1 = len;
+
 	if (crc64_fn) {
 		uint64_t crc = 0;
 		if (crc64_check(crc64_fn)) return 3;
@@ -382,9 +410,9 @@ int main(int argc, char **argv) {
 			if (f) n = fread(buf, 1, nbuf, f);
 			else len -= n = len > nbuf ? nbuf : len;
 			if (!n) break;
-			time = get_time_usec();
+			START_TIMER
 			crc = crc64_fn(buf, n, crc);
-			timesum += get_time_usec() - time;
+			UPDATE_TIMER
 		} while (n == nbuf);
 		printf("%016llx", (long long)crc);
 	} else {
@@ -394,17 +422,20 @@ int main(int argc, char **argv) {
 			if (f) n = fread(buf, 1, nbuf, f);
 			else len -= n = len > nbuf ? nbuf : len;
 			if (!n) break;
-			time = get_time_usec();
+			START_TIMER
 			crc = crc32_fn(buf, n, crc);
-			timesum += get_time_usec() - time;
+			UPDATE_TIMER
 		} while (n == nbuf);
 		printf("%08x", crc);
 	}
 
-	if (verbose > 0)
-		printf(" %s: %.3fms\n", type, timesum * 0.001);
-	else
-		printf("\n");
+	if (verbose > 0) {
+		printf(" %s: %.3fms", type, (int64_t)time * 0.001);
+#if WITH_CYCLES
+		printf(", %.3f cycles/byte", 1.0 * (int64_t)cycles / len1);
+#endif
+	}
+	printf("\n");
 
 	if (f && f != stdin) fclose(f);
 	free(buf);
