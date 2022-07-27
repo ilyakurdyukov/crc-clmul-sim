@@ -2,17 +2,50 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <time.h>
-#include <sys/time.h>
-static int64_t get_time_usec() {
-	struct timeval time;
-	gettimeofday(&time, NULL);
-	return time.tv_sec * (int64_t)1000000 + time.tv_usec;
-}
 
 #include "crc_slice.h"
 #include "crc_clsim.h"
+
+#include "perfcnt.h"
+
+static void snapshot_clock(void *p)
+{
+	clock_gettime(CLOCK_MONOTONIC, p);
+}
+static int perf_fd;
+static void snapshot_perf(void *p)
+{
+	perf_measure(perf_fd, p);
+}
+static void (*snapshot)(void *) = snapshot_clock;
+
+static long long delta_clock(void *p1, void *p0, int full)
+{
+	struct timespec *ts1 = p1, *ts0 = p0;
+	long nsecdiff = ts1->tv_nsec - ts0->tv_nsec;
+	return (ts1->tv_sec - ts0->tv_sec) * 1000000000 + nsecdiff;
+}
+static struct {
+	uint64_t cycles;
+	uint64_t instructions;
+} cnt_min = { -1, -1 };
+
+static void update_min(uint64_t *x, uint64_t v)
+{
+	if (*x > v) *x = v;
+}
+static long long delta_perf(void *p1, void *p0, int full)
+{
+	struct perf_counters *c1 = p1, *c0 = p0;
+	if (full) {
+		update_min(&cnt_min.cycles, c1->cycles - c0->cycles);
+		update_min(&cnt_min.instructions,
+			   c1->instructions - c0->instructions);
+	}
+	return c1->nsec - c0->nsec;
+}
+static long long (*delta)(void *, void *, int) = delta_clock;
 
 #ifndef HAVE_CLMUL
 #if ((defined(__SSE4_1__) && defined(__PCLMUL__)) || defined(__aarch64__)) \
@@ -293,10 +326,15 @@ int main(int argc, char **argv) {
 	size_t n, len = 100 * 1000000, nbuf = 1 << 20;
 	FILE *f = NULL;
 	int verbose = 1;
+	int use_perfcnt = 0;
 	const char *type = "crc64_simple";
-	int64_t time, timesum = 0;
+	long long timesum = 0;
+	union {
+		struct timespec ts;
+		struct perf_counters cnt;
+	} u1, u0;
 
-	while (argc > 2) {
+	while (argc > 1) {
 		if (argc > 2 && !strcmp(argv[1], "-i")) {
 			if (f) return 1;
 			if (!strcmp(argv[2], "-")) f = stdin;
@@ -314,6 +352,9 @@ int main(int argc, char **argv) {
 		} else if (argc > 2 && !strcmp(argv[1], "-v")) {
 			verbose = atoi(argv[2]);
 			argc -= 2; argv += 2;
+		} else if (argc > 1 && !strcmp(argv[1], "-p")) {
+			use_perfcnt = 1;
+			argc -= 1; argv += 1;
 		} else return 1;
 	}
 
@@ -369,6 +410,15 @@ int main(int argc, char **argv) {
 
 	} else return 1;
 
+	if (use_perfcnt) {
+		if ((perf_fd = perf_setup()) < 0) {
+			perf_hint();
+			return 2;
+		}
+		snapshot = snapshot_perf;
+		delta = delta_perf;
+	}
+
 	buf = malloc(nbuf);
 	if (!buf) return 2;
 
@@ -382,9 +432,10 @@ int main(int argc, char **argv) {
 			if (f) n = fread(buf, 1, nbuf, f);
 			else len -= n = len > nbuf ? nbuf : len;
 			if (!n) break;
-			time = get_time_usec();
+			snapshot(&u0);
 			crc = crc64_fn(buf, n, crc);
-			timesum += get_time_usec() - time;
+			snapshot(&u1);
+			timesum += delta(&u1, &u0, n == nbuf);
 		} while (n == nbuf);
 		printf("%016llx", (long long)crc);
 	} else {
@@ -394,17 +445,27 @@ int main(int argc, char **argv) {
 			if (f) n = fread(buf, 1, nbuf, f);
 			else len -= n = len > nbuf ? nbuf : len;
 			if (!n) break;
-			time = get_time_usec();
+			snapshot(&u0);
 			crc = crc32_fn(buf, n, crc);
-			timesum += get_time_usec() - time;
+			snapshot(&u1);
+			timesum += delta(&u1, &u0, n == nbuf);
 		} while (n == nbuf);
 		printf("%08x", crc);
 	}
 
 	if (verbose > 0)
-		printf(" %s: %.3fms\n", type, timesum * 0.001);
+		printf(" %s: %.3fms\n", type, timesum * 1e-6);
 	else
 		printf("\n");
+
+	if (use_perfcnt) {
+		uint64_t c = cnt_min.cycles, i = cnt_min.instructions;
+		double div = nbuf;
+		printf("%g cycles/B, %g insns/B, %g IPC\n",
+		       c / div,
+		       i / div,
+		       1. * i / c);
+	}
 
 	if (f && f != stdin) fclose(f);
 	free(buf);
