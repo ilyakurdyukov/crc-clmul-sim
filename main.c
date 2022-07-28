@@ -11,6 +11,25 @@
 #define WITH_CYCLES 1
 #endif
 
+#ifdef _GNU_SOURCE
+#include <time.h>
+#define TIME_DEF uint64_t time = 0; struct timespec ts0, ts1;
+#define TIME_GET clock_gettime(CLOCK_MONOTONIC, &ts0);
+#define TIME_DIFF clock_gettime(CLOCK_MONOTONIC, &ts1); \
+	time += (ts1.tv_sec - ts0.tv_sec) * 1000000000 + (ts1.tv_nsec - ts0.tv_nsec);
+#define TIME_TO_MS 1e-6
+#define TIME_TO_GHZ 1.0
+#else
+#include <time.h>
+#include <sys/time.h>
+#define TIME_DEF uint64_t time = 0; struct timeval tv0, tv1;
+#define TIME_GET gettimeofday(&tv0, NULL);
+#define TIME_DIFF gettimeofday(&tv1, NULL); \
+	time += (tv1.tv_sec - tv0.tv_sec) * 1000000 + (tv1.tv_usec - tv0.tv_usec);
+#define TIME_TO_MS 1e-3
+#define TIME_TO_GHZ 1e-3
+#endif
+
 #if WITH_CYCLES && !USE_PERFCNT
 #if defined(__i386__) || defined(__x86_64__) || defined(__e2k__)
 #include <x86intrin.h>
@@ -24,45 +43,29 @@ static inline uint64_t get_cycles() { return __rdtsc(); }
 #if USE_PERFCNT
 #include "perfcnt.h"
 #elif WITH_CYCLES
-#include <time.h>
-#define TIMER_DEF \
-	uint64_t time = 0; \
-	size_t len1; \
-	struct timespec ts0, ts1; \
-	uint64_t cycles = 0;
+#define TIMER_DEF TIME_DEF \
+	size_t len1; uint64_t cycles = 0;
 
 #define TIMER_INIT len1 = len;
 
-#define TIMER_START \
-	clock_gettime(CLOCK_MONOTONIC, &ts0); \
+#define TIMER_START TIME_GET \
 	cycles -= get_cycles();
 
 #define TIMER_STOP \
-	cycles += get_cycles(); \
-	clock_gettime(CLOCK_MONOTONIC, &ts1); \
-	time += (ts1.tv_sec - ts0.tv_sec) * 1000000000 + (ts1.tv_nsec - ts0.tv_nsec);
+	cycles += get_cycles(); TIME_DIFF
 
 #define TIMER_PRINT \
-	printf(" %s: %.3fms", type, time * 1e-6); \
+	printf(" %s: %.3fms", type, time * TIME_TO_MS); \
 	printf(", %.3f cycles/byte (%.3f GHz)", \
 			1.0 * (int64_t)cycles / len1, \
-			1.0 * (int64_t)cycles / (int64_t)time);
+			TIME_TO_GHZ * (int64_t)cycles / (int64_t)time);
 #else
-#include <time.h>
-#define TIMER_DEF \
-	uint64_t time = 0; \
-	struct timespec ts0, ts1;
-
+#define TIMER_DEF TIME_DEF
 #define TIMER_INIT
-
-#define TIMER_START clock_gettime(CLOCK_MONOTONIC, &ts0);
-
-#define TIMER_STOP \
-	clock_gettime(CLOCK_MONOTONIC, &ts1); \
-	time += (ts1.tv_sec - ts0.tv_sec) * 1000000000 + (ts1.tv_nsec - ts0.tv_nsec);
-
+#define TIMER_START TIME_GET
+#define TIMER_STOP TIME_DIFF
 #define TIMER_PRINT \
-	printf(" %s: %.3fms", type, time * 1e-6);
+	printf(" %s: %.3fms", type, time * TIME_TO_MS);
 #endif
 
 #include "crc_slice.h"
@@ -243,9 +246,11 @@ uint32_t crc32_intel(const uint8_t *s, size_t n, uint32_t c) {
 		e = s + n - 7;
 		// Avoid redundant zero extensions in the loop
 		// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=106453
-		uint64_t xc = c;
-		for (; s < e; s += 8) xc = _mm_crc32_u64(xc, *(uint64_t*)s);
-		c = xc;
+		{
+			uint64_t xc = c;
+			for (; s < e; s += 8) xc = _mm_crc32_u64(xc, *(uint64_t*)s);
+			c = xc;
+		}
 		if (n & 4) c = _mm_crc32_u32(c, *(uint32_t*)s);
 		if (n & 2) c = _mm_crc32_u16(c, *(uint16_t*)(s + (n & 4)));
 		if (n & 1) c = _mm_crc32_u8(c, s[n & 6]);
