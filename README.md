@@ -50,8 +50,8 @@ e76a8c2e crc32_clsim: 53.848ms
 e76a8c2e crc32_clsim: 53.997ms
 e76a8c2e crc32_clmul: 9.265ms
 e76a8c2e crc32_clmul: 9.250ms
-552c62dd crc32_intel: 14.398ms
-552c62dd crc32_intel: 14.360ms
+552c62dd crc32_intel: 10.840ms
+552c62dd crc32_intel: 10.829ms
 552c62dd crc32_intel_long: 4.196ms
 552c62dd crc32_intel_long: 4.193ms
 85b023217b513aeb crc64_slice4: 72.965ms
@@ -90,8 +90,8 @@ e76a8c2e crc32_clsim: 54.239ms
 e76a8c2e crc32_clsim: 54.494ms
 e76a8c2e crc32_clmul: 9.263ms
 e76a8c2e crc32_clmul: 9.244ms
-552c62dd crc32_intel: 14.330ms
-552c62dd crc32_intel: 14.564ms
+552c62dd crc32_intel: 10.786ms
+552c62dd crc32_intel: 10.783ms
 552c62dd crc32_intel_long: 3.935ms
 552c62dd crc32_intel_long: 3.941ms
 85b023217b513aeb crc64_slice4: 79.391ms
@@ -193,8 +193,8 @@ e76a8c2e crc32_clsim: 147.344ms
 e76a8c2e crc32_clsim: 147.005ms
 e76a8c2e crc32_clmul: 83.517ms
 e76a8c2e crc32_clmul: 84.358ms
-552c62dd crc32_intel: 33.676ms
-552c62dd crc32_intel: 33.649ms
+552c62dd crc32_intel: 25.341ms
+552c62dd crc32_intel: 25.355ms
 552c62dd crc32_intel_long: 11.794ms
 552c62dd crc32_intel_long: 11.618ms
 85b023217b513aeb crc64_slice4: 209.050ms

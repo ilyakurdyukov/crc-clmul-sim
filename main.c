@@ -18,7 +18,7 @@
 #define TIME_DIFF clock_gettime(CLOCK_MONOTONIC, &ts1); \
 	time += (ts1.tv_sec - ts0.tv_sec) * 1000000000 + (ts1.tv_nsec - ts0.tv_nsec);
 #define TIME_TO_MS 1e-6
-#define TIME_TO_GHZ 1.0
+#define TIME_FROM_GHZ 1.0
 #else
 #include <time.h>
 #include <sys/time.h>
@@ -27,7 +27,7 @@
 #define TIME_DIFF gettimeofday(&tv1, NULL); \
 	time += (tv1.tv_sec - tv0.tv_sec) * 1000000 + (tv1.tv_usec - tv0.tv_usec);
 #define TIME_TO_MS 1e-3
-#define TIME_TO_GHZ 1e-3
+#define TIME_FROM_GHZ 1e-3
 #endif
 
 #if WITH_CYCLES && !USE_PERFCNT
@@ -58,7 +58,7 @@ static inline uint64_t get_cycles() { return __rdtsc(); }
 	printf(" %s: %.3fms", type, time * TIME_TO_MS); \
 	printf(", %.3f cycles/byte (%.3f GHz)", \
 			1.0 * (int64_t)cycles / len1, \
-			TIME_TO_GHZ * (int64_t)cycles / (int64_t)time);
+			TIME_FROM_GHZ * (int64_t)cycles / (int64_t)time);
 #else
 #define TIMER_DEF TIME_DEF
 #define TIMER_INIT
