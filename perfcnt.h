@@ -34,8 +34,15 @@ static int perf_event_open(
 static int perf_init(void) {
 	struct perf_event_attr evt = {
 		.size = sizeof(evt),
+#ifdef RDTSC_GHZ
+		.type = PERF_TYPE_HARDWARE,
+		.config = PERF_COUNT_HW_REF_CPU_CYCLES,
+#define PERF_TIME_DIV (double)(RDTSC_GHZ)
+#else
 		.type = PERF_TYPE_SOFTWARE,
 		.config = PERF_COUNT_SW_CPU_CLOCK,
+#define PERF_TIME_DIV 1.0
+#endif
 		.read_format = PERF_FORMAT_GROUP,
 		.pinned = 1,
 		.exclude_kernel = 1,
@@ -96,7 +103,7 @@ static int perf_read(struct perf_counters *cnt) {
 }
 
 #define TIMER_PRINT \
-	printf(" %s: %.3fms", type, time * 1e-6); \
+	printf(" %s: %.3fms", type, time * (1e-6 / PERF_TIME_DIV)); \
 	printf(", %.3f cycles/byte, %.3f insn/byte (%.3f GHz)", \
-			min_cycles, min_insns, 1.0 * (int64_t)cycles / (int64_t)time);
+			min_cycles, min_insns, PERF_TIME_DIV * (int64_t)cycles / (int64_t)time);
 
