@@ -42,6 +42,18 @@ static inline uint64_t get_cycles() { return __rdtsc(); }
 
 #if USE_PERFCNT
 #include "perfcnt.h"
+// CPU is running at nominal frequency and the frequency is known
+#elif WITH_CYCLES && defined(RDTSC_GHZ)
+#define TIMER_DEF \
+	size_t len1; uint64_t cycles = 0;
+#define TIMER_INIT len1 = len;
+#define TIMER_START cycles -= get_cycles();
+#define TIMER_STOP cycles += get_cycles();
+#define TIMER_PRINT \
+	printf(" %s: %.3fms", type, cycles * (1e-6 / (RDTSC_GHZ))); \
+	printf(", %.3f cycles/byte (%.3f GHz)", \
+			1.0 * (int64_t)cycles / len1, (double)(RDTSC_GHZ));
+// CPU is running at nominal frequency
 #elif WITH_CYCLES
 #define TIMER_DEF TIME_DEF \
 	size_t len1; uint64_t cycles = 0;
@@ -59,6 +71,7 @@ static inline uint64_t get_cycles() { return __rdtsc(); }
 	printf(", %.3f cycles/byte (%.3f GHz)", \
 			1.0 * (int64_t)cycles / len1, \
 			TIME_FROM_GHZ * (int64_t)cycles / (int64_t)time);
+// just time
 #else
 #define TIMER_DEF TIME_DEF
 #define TIMER_INIT
@@ -66,6 +79,7 @@ static inline uint64_t get_cycles() { return __rdtsc(); }
 #define TIMER_STOP TIME_DIFF
 #define TIMER_PRINT \
 	printf(" %s: %.3fms", type, time * TIME_TO_MS);
+
 #endif
 
 #include "crc_slice.h"
