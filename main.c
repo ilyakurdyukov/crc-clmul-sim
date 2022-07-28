@@ -1,3 +1,10 @@
+#ifdef PERF_CPU
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#include <unistd.h>
+#include <sched.h>
+#endif
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -445,6 +452,18 @@ int main(int argc, char **argv) {
 #endif
 
 	} else return 1;
+
+#ifdef PERF_CPU
+	{
+		cpu_set_t set;
+		CPU_ZERO(&set);
+		CPU_SET(PERF_CPU, &set);
+		if (sched_setaffinity(getpid(), sizeof(set), &set) < 0) {
+			printf("!!! sched_setaffinity failed\n");
+			return 2;
+		}
+	}
+#endif
 
 	TIMER_INIT
 
