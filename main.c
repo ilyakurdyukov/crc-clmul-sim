@@ -284,7 +284,7 @@ static int crc32_check2(uint32_t (*crc32_fn)(const uint8_t*, size_t, uint32_t)) 
 	uint32_t init = 0x01234567, crc1, crc2;
 
 	buf = (uint8_t*)(((uintptr_t)buf1 + 15) & -16);
-	for (i = 0; i < n + 16; i++) buf[i] = i * 0x55;
+	for (i = 0; i < n + 16; i++) buf[i] = i * 0x76543210u >> 24;
 
 	for (i = 0; i < 16; i++)
 	for (j = 0; j < n; j++) {
@@ -305,7 +305,7 @@ static int crc32_check(uint32_t (*crc32_fn)(const uint8_t*, size_t, uint32_t)) {
 	uint32_t init = 0x01234567, crc1, crc2;
 
 	buf = (uint8_t*)(((uintptr_t)buf1 + 15) & -16);
-	for (i = 0; i < n + 16; i++) buf[i] = i * 0x55;
+	for (i = 0; i < n + 16; i++) buf[i] = i * 0x76543210u >> 24;
 
 	for (i = 0; i < 16; i++)
 	for (j = 0; j < n; j++) {
@@ -325,7 +325,7 @@ static int crc64_check(uint64_t (*crc64_fn)(const uint8_t*, size_t, uint64_t)) {
 	uint64_t init = 0x0123456789abcdef, crc1, crc2;
 
 	buf = (uint8_t*)(((uintptr_t)buf1 + 15) & -16);
-	for (i = 0; i < n + 16; i++) buf[i] = i * 0x55;
+	for (i = 0; i < n + 16; i++) buf[i] = i * 0x76543210u >> 24;
 
 	for (i = 0; i < 16; i++)
 	for (j = 0; j < n; j++) {
@@ -429,7 +429,7 @@ int main(int argc, char **argv) {
 	if (!buf) return 2;
 
 	if (!f)
-		for (n = 0; n < nbuf; n++) buf[n] = n * 0x55;
+		for (n = 0; n < nbuf; n++) buf[n] = n * 0x76543210u >> 24;
 
 	if (crc64_fn) {
 		uint64_t crc = 0;
@@ -465,3 +465,4 @@ int main(int argc, char **argv) {
 	if (f && f != stdin) fclose(f);
 	free(buf);
 }
+
