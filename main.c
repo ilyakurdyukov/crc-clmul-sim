@@ -241,7 +241,11 @@ uint32_t crc32_intel(const uint8_t *s, size_t n, uint32_t c) {
 		if (x & 4) c = _mm_crc32_u32(c, *(uint32_t*)(s + (x & 3)));
 		n -= x; s += x;
 		e = s + n - 7;
-		for (; s < e; s += 8) c = _mm_crc32_u64(c, *(uint64_t*)s);
+		// Avoid redundant zero extensions in the loop
+		// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=106453
+		uint64_t xc = c;
+		for (; s < e; s += 8) xc = _mm_crc32_u64(xc, *(uint64_t*)s);
+		c = xc;
 		if (n & 4) c = _mm_crc32_u32(c, *(uint32_t*)s);
 		if (n & 2) c = _mm_crc32_u16(c, *(uint16_t*)(s + (n & 4)));
 		if (n & 1) c = _mm_crc32_u8(c, s[n & 6]);
