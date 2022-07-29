@@ -101,7 +101,7 @@ static int perf_read(struct perf_counters *cnt) {
 	perf_read(&perf0); CYCLES_READ(perf0)
 
 #define TIMER_STOP { \
-	perf_read(&perf1); CYCLES_READ(perf1) \
+	CYCLES_READ(perf1) perf_read(&perf1); \
 	cycles += perf1.cycles - perf0.cycles; \
 	double cycles = (double)(perf1.cycles - perf0.cycles) / n; \
 	if (min_cycles > cycles) { \
