@@ -9,7 +9,7 @@
 #define POLY64 0xc96c5795d7870f42
 #endif
 
-static uint64_t crc32_table4[4][256];
+static uint32_t crc32_table4[4][256];
 
 void crc32_slice4_init(void) {
 	uint32_t a, p = POLY32;

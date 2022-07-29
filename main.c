@@ -130,7 +130,7 @@ uint64_t crc64_micro(const uint8_t *s, size_t n, uint64_t c) {
 	return ~c;
 }
 
-static uint64_t crc32_table[256];
+static uint32_t crc32_table[256];
 
 void crc32_simple_init(void) {
 	int i, j; uint32_t a, p = POLY32;
