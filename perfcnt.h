@@ -8,7 +8,7 @@
 
 struct perf_counters {
 	uint64_t n;          // number of fields below
-	uint64_t nsec, cycles, insns;
+	uint64_t cycles, insns, nsec;
 };
 
 static int perf_fd = -1;
@@ -20,8 +20,7 @@ static ssize_t sys_read(int fd, void *buf, size_t size) {
 			: "a"(SYS_read), "D"(fd), "S"(buf), "d"(size)
 			: "%rcx", "%r11", "memory");
 #else
-	r = syscall(SYS_read, fd, buf, size);
-	// r = read(fd, buf, size);
+	r = read(fd, buf, size);
 #endif
 	return r;
 }
@@ -34,15 +33,8 @@ static int perf_event_open(
 static int perf_init(void) {
 	struct perf_event_attr evt = {
 		.size = sizeof(evt),
-#ifdef RDTSC_GHZ
 		.type = PERF_TYPE_HARDWARE,
-		.config = PERF_COUNT_HW_REF_CPU_CYCLES,
-#define PERF_TIME_DIV (double)(RDTSC_GHZ)
-#else
-		.type = PERF_TYPE_SOFTWARE,
-		.config = PERF_COUNT_SW_CPU_CLOCK,
-#define PERF_TIME_DIV 1.0
-#endif
+		.config = PERF_COUNT_HW_CPU_CYCLES,
 		.read_format = PERF_FORMAT_GROUP,
 		.pinned = 1,
 		.exclude_kernel = 1,
@@ -52,32 +44,49 @@ static int perf_init(void) {
 
 	do {
 		if ((fd = perf_event_open(&evt, 0, -1, -1, 0)) < 0) break;
-		evt.type = PERF_TYPE_HARDWARE;
-		evt.config = PERF_COUNT_HW_CPU_CYCLES;
+		evt.config = PERF_COUNT_HW_INSTRUCTIONS;
 		evt.pinned = 0;
 		if (perf_event_open(&evt, 0, -1, fd, 0) < 0) break;
-		evt.config = PERF_COUNT_HW_INSTRUCTIONS;
+#if !WITH_CYCLES || !defined(RDTSC_GHZ)
+#ifdef RDTSC_GHZ
+		evt.config = PERF_COUNT_HW_REF_CPU_CYCLES;
+#define PERF_TIME_DIV (double)(RDTSC_GHZ)
+#else
+		evt.type = PERF_TYPE_SOFTWARE;
+		evt.config = PERF_COUNT_SW_CPU_CLOCK;
+#define PERF_TIME_DIV 1.0
+#endif
 		if (perf_event_open(&evt, 0, -1, fd, 0) < 0) break;
+#endif
 		if (ioctl(fd, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP) < 0) break;
 		perf_fd = fd;
 		return fd;
 	} while (0);
+	printf("!!! perf_event_open failed\n");
 	{
 		const char *path = "/proc/sys/kernel/perf_event_paranoid";
 		char c;
-		if ((fd = open(path, O_RDONLY)) >= 0
-			  && read(fd, &c, 1) == 1 && c > '2')
-			printf(
+		if ((fd = open(path, O_RDONLY)) >= 0) {
+		  if (read(fd, &c, 1) == 1 && c > '2')
+				printf(
 	"Some distributions (e.g. Debian and derivatives) disallow self-profiling\n\n"
 	"Run 'sysctl kernel.perf_event_paranoid=2' as root or write to %s manually.\n",
 				     path);
-		close(fd);
+			close(fd);
+		}
 	}
 	return -1;
 }
 
 static int perf_read(struct perf_counters *cnt) {
+#if !WITH_CYCLES || !defined(RDTSC_GHZ)
+#define CYCLES_READ(x)
 	return sys_read(perf_fd, cnt, sizeof(*cnt));
+#else
+#define PERF_TIME_DIV (double)(RDTSC_GHZ)
+#define CYCLES_READ(x) x.nsec = get_cycles();
+	return sys_read(perf_fd, cnt, sizeof(*cnt) - sizeof(cnt->nsec));
+#endif
 }
 
 #define TIMER_DEF \
@@ -89,10 +98,10 @@ static int perf_read(struct perf_counters *cnt) {
 	if (perf_init() < 0) return 2;
 
 #define TIMER_START \
-	perf_read(&perf0);
+	perf_read(&perf0); CYCLES_READ(perf0)
 
 #define TIMER_STOP { \
-	perf_read(&perf1); \
+	perf_read(&perf1); CYCLES_READ(perf1) \
 	cycles += perf1.cycles - perf0.cycles; \
 	double cycles = (double)(perf1.cycles - perf0.cycles) / n; \
 	if (min_cycles > cycles) { \
