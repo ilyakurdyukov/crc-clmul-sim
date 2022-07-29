@@ -177,20 +177,20 @@ static inline uint32_t crc32_multmodp(uint32_t p, uint32_t a, uint32_t b) {
 
 // M##i = calc_hi(POLY, POLY, i * N * 8 - 32)
 
-#define CRC32_PARALLEL4(fn, T, N, POLY, M1, M2, M3) \
+#define CRC32_PARALLEL4(fn, T1, T, N, POLY, M1, M2, M3) \
 	for (; n >= N*4; n -= N*4) { \
 		const uint8_t *e = s + N; \
-		uint32_t c1 = ~0, c2 = ~0, c3 = ~0; \
+		T1 c0 = c, c1 = ~0u, c2 = ~0u, c3 = ~0u; \
 		for (; s < e; s += sizeof(T)) { \
-			c = fn(c, *(T*)s); \
+			c0 = fn(c0, *(T*)s); \
 			c1 = fn(c1, *(T*)(s + N)); \
 			c2 = fn(c2, *(T*)(s + N * 2)); \
 			c3 = fn(c3, *(T*)(s + N * 3)); \
 		} \
-		c = crc32_multmodp(POLY, M3, ~c); \
-		c1 = crc32_multmodp(POLY, M2, ~c1); \
-		c2 = crc32_multmodp(POLY, M1, ~c2); \
-		c ^= c1 ^ c2 ^ c3; s += N * 3; \
+		c = c3; s += N * 3; \
+		c ^= crc32_multmodp(POLY, M3, ~c0); \
+		c ^= crc32_multmodp(POLY, M2, ~c1); \
+		c ^= crc32_multmodp(POLY, M1, ~c2); \
 	}
 
 #ifdef __ARM_FEATURE_CRC32
@@ -233,10 +233,10 @@ uint32_t crc32_arm_long(const uint8_t *s, size_t n, uint32_t c) {
 	c = ~c;
 #ifdef CRC32_PARALLEL4
 #ifdef __aarch64__
-	CRC32_PARALLEL4(__crc32d, uint64_t, 4096,
+	CRC32_PARALLEL4(__crc32d, uint32_t, uint64_t, 4096,
 			0xedb88320, 0x09fe548f, 0x83852d0f, 0xe4b54665)
 #else
-	CRC32_PARALLEL4(__crc32w, uint32_t, 4096,
+	CRC32_PARALLEL4(__crc32w, uint32_t, uint32_t, 4096,
 			0xedb88320, 0x09fe548f, 0x83852d0f, 0xe4b54665)
 #endif
 #endif
@@ -298,10 +298,10 @@ uint32_t crc32_intel_long(const uint8_t *s, size_t n, uint32_t c) {
 	c = ~c;
 #ifdef CRC32_PARALLEL4
 #ifndef __i386__
-	CRC32_PARALLEL4(_mm_crc32_u64, uint64_t, 4096,
+	CRC32_PARALLEL4(_mm_crc32_u64, uint64_t, uint64_t, 4096,
 			0x82f63b78, 0x35d73a62, 0x28461564, 0x43eefc9f)
 #else
-	CRC32_PARALLEL4(_mm_crc32_u32, uint32_t, 4096,
+	CRC32_PARALLEL4(_mm_crc32_u32, uint32_t, uint32_t, 4096,
 			0x82f63b78, 0x35d73a62, 0x28461564, 0x43eefc9f)
 #endif
 #endif

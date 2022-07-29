@@ -111,8 +111,8 @@ e76a8c2e crc32_slice4: 121.648ms
 e76a8c2e crc32_slice4: 121.835ms
 e76a8c2e crc32_clsim: 71.895ms
 e76a8c2e crc32_clsim: 71.976ms
-e76a8c2e crc32_clmul: 18.543ms
-e76a8c2e crc32_clmul: 18.533ms
+e76a8c2e crc32_clmul: 15.917ms
+e76a8c2e crc32_clmul: 15.972ms
 552c62dd crc32_intel: 15.892ms
 552c62dd crc32_intel: 15.903ms
 552c62dd crc32_intel_long: 6.434ms
@@ -121,8 +121,8 @@ e76a8c2e crc32_clmul: 18.533ms
 85b023217b513aeb crc64_slice4: 110.943ms
 85b023217b513aeb crc64_clsim: 72.320ms
 85b023217b513aeb crc64_clsim: 72.250ms
-85b023217b513aeb crc64_clmul: 18.538ms
-85b023217b513aeb crc64_clmul: 18.529ms
+85b023217b513aeb crc64_clmul: 15.866ms
+85b023217b513aeb crc64_clmul: 15.898ms
 ```
 
 #### (e2k-v6) Elbrus-16C 2.0GHz / LCC 1.25.20
@@ -195,8 +195,8 @@ e76a8c2e crc32_clmul: 83.517ms
 e76a8c2e crc32_clmul: 84.358ms
 552c62dd crc32_intel: 25.341ms
 552c62dd crc32_intel: 25.355ms
-552c62dd crc32_intel_long: 11.794ms
-552c62dd crc32_intel_long: 11.618ms
+552c62dd crc32_intel_long: 10.790ms
+552c62dd crc32_intel_long: 10.943ms
 85b023217b513aeb crc64_slice4: 209.050ms
 85b023217b513aeb crc64_slice4: 208.272ms
 85b023217b513aeb crc64_clsim: 162.125ms
