@@ -37,7 +37,7 @@
 #define TIME_FROM_GHZ 1e-3
 #endif
 
-#if WITH_CYCLES && !USE_PERFCNT
+#if WITH_CYCLES
 #if defined(__i386__) || defined(__x86_64__) || defined(__e2k__)
 #include <x86intrin.h>
 static inline uint64_t get_cycles() { return __rdtsc(); }
@@ -372,7 +372,7 @@ static int crc64_check(uint64_t (*crc64_fn)(const uint8_t*, size_t, uint64_t)) {
 int main(int argc, char **argv) {
 	uint32_t (*crc32_fn)(const uint8_t*, size_t, uint32_t) = NULL;
 	uint64_t (*crc64_fn)(const uint8_t*, size_t, uint64_t) = NULL;
-	int (*crc32_check_fn)(uint32_t (*crc32_fn)(const uint8_t*, size_t, uint32_t)) = crc32_check;
+	int (*crc32_check_fn)(uint32_t (*)(const uint8_t*, size_t, uint32_t)) = crc32_check;
 	uint8_t *buf;
 	size_t n, len = 100 * 1000000, nbuf = 1 << 20;
 	FILE *f = NULL;

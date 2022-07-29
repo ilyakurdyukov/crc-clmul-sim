@@ -9,6 +9,7 @@
 #define POLY64 0xc96c5795d7870f42
 #endif
 
+// 256*4*4 = 4096
 static uint32_t crc32_table4[4][256];
 
 void crc32_slice4_init(void) {
@@ -58,6 +59,7 @@ uint32_t crc32_slice4(const uint8_t *s, size_t n, uint32_t c) {
 	return ~c;
 }
 
+// 256*4*8 = 8192
 static uint64_t crc64_table4[4][256];
 
 void crc64_slice4_init(void) {
